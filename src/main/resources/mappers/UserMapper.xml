@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--suppress SqlDialectInspection -->
+<mapper namespace="org.manlier.models.UserDao">
+
+    <resultMap id="userMap" type="org.manlier.beans.User">
+
+    </resultMap>
+
+    <!--添加用户-->
+    <insert id="addUser">
+
+        <selectKey resultType="java.lang.String" order="BEFORE" keyProperty="user.userUuid">
+            SELECT uuid_short()
+        </selectKey>
+        INSERT INTO user (user_uuid, email, nickname, password, img)
+        VALUES
+        (#{user.userUuid},
+        #{user.email}, #{user.nickname}, #{user.password}, #{user.img})
+    </insert>
+
+    <!--通过用户id获得用户-->
+    <select id="getUserByUserId" resultType="org.manlier.beans.User" resultMap="userMap">
+        SELECT * FROM
+        user
+        WHERE
+        user_uuid = #{userId}
+    </select>
+
+    <!--获得指定数量的用户-->
+    <select id="selectUsersFrom" resultType="User">
+        SELECT * FROM
+        user
+        ORDER BY
+        create_time
+        limit #{offset}, #{size}
+    </select>
+
+    <!--更新用户-->
+    <update id="updateUser">
+        UPDATE user
+        <set>
+            <if test="user.email != null">
+                email = #{user.email}
+            </if>
+            <if test="user.nickname != null">
+                , nickname = #{user.nickname}
+            </if>
+            <if test="user.password != null">
+                , password = #{user.password}
+            </if>
+            <if test="user.img != null">
+                , img = #{user.img}
+            </if>
+        </set>
+        WHERE user_uuid = #{user.userUuid}
+    </update>
+
+    <!--删除用户-->
+    <delete id="deleteUser">
+        DELETE FROM user
+        WHERE user_uuid = #{userId}
+    </delete>
+
+    <!--通过账号查找用户-->
+    <select id="findUserByAccount" resultType="User">
+        SELECT * FROM user
+        WHERE email = #{email}
+    </select>
+
+    <!--通过账号和密码查找用户-->
+    <select id="findUserByAccountAndPassword" resultType="User">
+        SELECT * FROM user
+        WHERE email = #{email} AND password = #{password}
+    </select>
+
+</mapper>

@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--suppress SqlDialectInspection -->
+<mapper namespace="org.manlier.models.ScheduleDao">
+
+    <resultMap id="scheduleMap" type="org.manlier.beans.Schedule">
+        <result column="status" property="status" jdbcType="NUMERIC"
+                typeHandler="org.apache.ibatis.type.EnumOrdinalTypeHandler"/>
+    </resultMap>
+
+    <!--为用户添加日程-->
+    <insert id="addScheduleForUser">
+        <selectKey resultType="String" keyProperty="schedule.scheduleUuid" order="BEFORE">
+            SELECT replace(uuid(),'-','')
+        </selectKey>
+
+        INSERT INTO schedule (schedule_uuid, user_uuid, parent_uuid, group_uuid, location_uuid,
+        start_time, complete_time, due_time, modify_time,
+        sort_order, is_all_day, priority, deleted, progress,
+        title, summ, content,
+        status)
+        VALUES
+        (#{schedule.scheduleUuid}, #{userId}, #{schedule.parentUuid}, #{schedule.groupUuid}, #{schedule.locationUuid},
+        #{schedule.startTime},
+        #{schedule.completeTime},
+        #{schedule.dueTime},
+        #{schedule.modifyTime},
+        #{schedule.sortOrder}, #{schedule.isAllDay}, #{schedule.priority}, #{schedule.deleted}, #{schedule.progress},
+        #{schedule.title}, #{schedule.summ}, #{schedule.content},
+        #{schedule.status, typeHandler=org.apache.ibatis.type.EnumOrdinalTypeHandler})
+    </insert>
+
+    <!--通过日程id获得日程-->
+    <select id="getScheduleByScheduleId" resultMap="scheduleMap">
+        SELECT * FROM schedule_view
+        WHERE schedule_uuid = #{scheduleId}
+    </select>
+
+    <!--更新日程-->
+    <update id="updateSchedule">
+        UPDATE schedule
+        SET
+        is_all_day = #{schedule.isAllDay},
+        sort_order = #{schedule.sortOrder},
+        priority = #{schedule.priority},
+        deleted = #{schedule.deleted},
+        progress = #{schedule.progress},
+        <if test="schedule.title != null">
+            title = #{schedule.title}
+        </if>
+        <if test="schedule.summ != null">
+            , summ = #{schedule.summ}
+        </if>
+        <if test="schedule.content != null">
+            ,content = #{schedule.content}
+        </if>
+        <if test="schedule.startTime != null">
+            , start_time = #{schedule.startTime}
+        </if>
+        <if test="schedule.completeTime != null">
+            , complete_time =
+            #{schedule.completeTime}
+        </if>
+        <if test="schedule.dueTime != null">
+            , due_time = #{schedule.dueTime}
+        </if>
+        <if test="schedule.parentUuid != null">
+            , parent_uuid = #{schedule.parentUuid}
+        </if>
+        <if test="schedule.groupUuid != null">
+            , group_uuid = #{schedule.groupUuid}
+        </if>
+        <if test="schedule.locationUuid != null">
+            , location_uuid = #{schedule.locationUuid}
+        </if>
+        WHERE schedule_uuid = #{schedule.scheduleUuid}
+    </update>
+
+    <!--删除日程-->
+    <delete id="deleteSchedule">
+        DELETE FROM schedule
+        WHERE schedule_uuid = #{scheduleId}
+    </delete>
+
+    <!--查询指定时间间隔内的日程-->
+    <select id="findSchedulesDuringTimePeriod" resultMap="scheduleMap">
+        SELECT * FROM schedule_view
+        WHERE
+        date_format(start_time, '%Y-%m-%d %H:%i:%S') > #{beginTime}
+        AND
+        date_format(start_time, '%Y-%m-%d %H:%i:%S') &lt; #{endTime}
+        AND
+        user_uuid = #{userId}
+        AND
+        deleted = 0
+    </select>
+
+    <!--获得所有日程-->
+    <select id="getAllSchedulesForUser" resultMap="scheduleMap">
+        SELECT * FROM schedule_view
+        WHERE user_uuid = #{userId}
+        AND deleted = 0
+    </select>
+
+    <!--获得当前清单下的所有日程-->
+    <select id="getAllSchedulesByProjectId" resultMap="scheduleMap">
+        SELECT * FROM schedule_view
+        WHERE group_uuid = #{projectId}
+        AND deleted = 0
+    </select>
+
+    <!--回收日程-->
+    <update id="recycleSchedule">
+        UPDATE schedule
+        SET deleted = 1
+        WHERE schedule_uuid = #{scheduleId}
+    </update>
+
+    <!--从回收站中恢复日程-->
+    <update id="restoreSchedule">
+        UPDATE schedule
+        SET deleted = 0
+        WHERE schedule_uuid = #{scheduleId}
+    </update>
+
+    <!--完成日程-->
+    <update id="completeSchedule">
+        UPDATE schedule
+        SET status = 2,
+        complete_time = now()
+        WHERE schedule_uuid = #{scheduleId}
+    </update>
+
+    <!--未完成日程-->
+    <update id="incompleteSchedule">
+        UPDATE schedule
+        SET status = 0,
+        complete_time = NULL
+        WHERE schedule_uuid = #{scheduleId}
+    </update>
+
+    <!--清空回收站中所有日程-->
+    <delete id="deleteAllRecycledSchedulesForUser">
+        DELETE FROM schedule
+        WHERE user_uuid = #{userId}
+        AND deleted = 1
+    </delete>
+
+    <!--获得回收站中所有日程-->
+    <select id="getAllRecycledSchedulesForUser" resultMap="scheduleMap">
+        SELECT * FROM schedule_view
+        WHERE user_uuid = #{userId}
+        AND deleted = 1
+    </select>
+
+    <!--设置开始与结束时间-->
+    <update id="setStartAndDueTime">
+        UPDATE schedule
+        set start_time = #{startTime}
+        , due_time = #{dueTime}
+        WHERE schedule_uuid = #{scheduleId}
+    </update>
+
+</mapper>

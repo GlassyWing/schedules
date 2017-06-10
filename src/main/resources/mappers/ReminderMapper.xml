@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--suppress SqlDialectInspection -->
+<mapper namespace="org.manlier.models.ReminderDao">
+
+    <!--为日程添加提醒-->
+    <insert id="addReminderForSchedule">
+        <selectKey keyProperty="reminder.reminderUuid" order="BEFORE" resultType="String">
+            SELECT replace(uuid(),'-','')
+        </selectKey>
+        INSERT INTO reminder (reminder_uuid, schedule_uuid, duration) VALUES (#{reminder.reminderUuid}, #{scheduleId},
+        #{reminder.duration})
+    </insert>
+
+    <!--获取指定提醒-->
+    <select id="getReminderByReminderId" resultType="Reminder">
+        SELECT * FROM reminder
+        WHERE reminder_uuid = #{reminderId}
+    </select>
+
+    <!--删除指定提醒-->
+    <delete id="deleteReminder">
+        DELETE FROM reminder
+        WHERE reminder_uuid IN
+        <foreach collection="reminderIds" item="item" open="("
+                 separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <!--更新提醒-->
+    <update id="updateReminder">
+        UPDATE reminder
+        SET
+        <if test="reminder.duration != null">
+            duration = #{reminder.duration}
+        </if>
+        WHERE reminder_uuid = #{reminder.reminderUuid}
+    </update>
+
+    <!--获得所有的提醒-->
+    <select id="getAllReminderForSchedule" resultType="Reminder">
+        SELECT * FROM reminder
+        WHERE schedule_uuid = #{scheduleId}
+    </select>
+
+    <!--删除日程所有的提醒-->
+    <delete id="deleteAllRemindersForSchedule">
+        DELETE FROM reminder
+        WHERE schedule_uuid = #{scheduleId}
+    </delete>
+</mapper>

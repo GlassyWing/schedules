@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--suppress SqlDialectInspection -->
+<mapper namespace="org.manlier.models.ProjectDao">
+
+    <insert id="addProjectForUser">
+        <selectKey resultType="String" keyProperty="project.projectUuid" order="BEFORE">
+            SELECT replace(uuid(),'-','')
+        </selectKey>
+        INSERT INTO project (project_uuid, title, user_uuid)
+        VALUES (#{project.projectUuid}, #{project.title}, #{userId})
+    </insert>
+
+    <update id="updateProject">
+        UPDATE project
+        SET
+        <if test="project.title != null">
+            title = #{project.title}
+        </if>
+        WHERE project_uuid = #{project.projectUuid}
+    </update>
+
+    <select id="getProjectByProjectId" resultType="Project">
+        SELECT * FROM project
+        WHERE project_uuid = #{projectId}
+    </select>
+
+    <select id="getAllProjectsForUserExcept" resultType="Project">
+        SELECT * FROM project
+        WHERE user_uuid = #{userId} AND project_uuid != #{exceptProjectId}
+    </select>
+
+    <!--删除清单-->
+    <delete id="deleteProject">
+        DELETE FROM project
+        WHERE project_uuid = #{projectId}
+    </delete>
+
+</mapper>

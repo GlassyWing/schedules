@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--suppress SqlDialectInspection -->
+<mapper namespace="org.manlier.models.RepetitionDao">
+
+    <resultMap id="repetitionMap" type="org.manlier.beans.Repetition">
+        <result column="repeat_on" property="repeatOn" jdbcType="NUMERIC"
+                typeHandler="org.apache.ibatis.type.EnumOrdinalTypeHandler"/>
+        <result column="cron" property="cron" jdbcType="VARCHAR"
+                typeHandler="org.manlier.models.typehandlers.CronExpressionTypeHandler"/>
+    </resultMap>
+
+    <!--为日程添加重复规则-->
+    <insert id="addRepetitionForSchedule">
+        <selectKey resultType="String" keyProperty="repetition.repetitionUuid" order="BEFORE">
+            SELECT replace(uuid(),'-','')
+        </selectKey>
+        INSERT INTO repetition (repetition_uuid, schedule_uuid, `until`, repeat_on, cron)
+        VALUES (#{repetition.repetitionUuid}, #{scheduleId}, #{repetition.until},
+        #{repetition.repeatOn, typeHandler=org.apache.ibatis.type.EnumOrdinalTypeHandler},
+        #{repetition.cron, typeHandler=org.manlier.models.typehandlers.CronExpressionTypeHandler})
+    </insert>
+
+    <!--获得日程的重复规则-->
+    <select id="getRepetitionByScheduleId" resultMap="repetitionMap">
+        SELECT * FROM repetition
+        WHERE schedule_uuid = #{scheduleId}
+    </select>
+
+    <!--更新日程的重复规则-->
+    <update id="updateRepetition">
+        UPDATE repetition
+        <set>
+            <if test="repetition.repeatOn != null">
+                repeat_on = #{repetition.repeatOn, typeHandler=org.apache.ibatis.type.EnumOrdinalTypeHandler}
+            <if test="repetition.until != null">
+                , `until` = #{repetition.until}
+            </if>
+            </if>
+            <if test="repetition.cron != null">
+                , cron = #{repetition.cron, typeHandler=org.manlier.models.typehandlers.CronExpressionTypeHandler}
+            </if>
+        </set>
+    </update>
+
+    <!--删除指定日程的重复规则-->
+    <delete id="deleteRepetition">
+        DELETE FROM repetition
+        WHERE schedule_uuid = #{scheduleId}
+    </delete>
+</mapper>
