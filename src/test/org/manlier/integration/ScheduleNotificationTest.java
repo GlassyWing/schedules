@@ -38,14 +38,19 @@ public class ScheduleNotificationTest {
 
     private String defaultScheduleId = "700b84aa4df011e7ac0754a050631fca";
 
+    // 测试安排通知作业
     @Test
     public void scheduleReminders() throws SchedulerException {
+
+        // 新建两个通知
         List<Reminder> reminders = Arrays.asList(new Reminder("PT-5S"), new Reminder("PT-10S"));
 
+        // 已经加载到数据库？
         boolean affected = reminderService.addRemindersForSchedule(defaultScheduleId, reminders);
 
         Assert.assertTrue(affected);
 
+        // 以当前时间之后15s为基准安排通知
         notificationService.scheduleReminderJobForSchedule(defaultScheduleId, Instant.now().plus(15, ChronoUnit.SECONDS), reminders);
     }
 

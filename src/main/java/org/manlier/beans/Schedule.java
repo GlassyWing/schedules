@@ -2,13 +2,10 @@ package org.manlier.beans;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.manlier.contracts.DateFormatContract;
 import org.manlier.contracts.ScheduleStatus;
 import org.manlier.customs.json.ScheduleStatusSerializer;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * 日程类
