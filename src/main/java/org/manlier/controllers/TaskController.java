@@ -143,6 +143,12 @@ public class TaskController implements
         return fail(null);
     }
 
+    /**
+     * 删除日程
+     *
+     * @param taskId 日程id
+     * @return 操作结果
+     */
     @RequestMapping(value = "/{taskId}", method = RequestMethod.DELETE)
     @ResponseBody
     public BaseResult<Void> deleteTask(@PathVariable("taskId") String taskId) {
@@ -189,6 +195,11 @@ public class TaskController implements
 
     /*---------------------------Callback---------------------------*/
 
+    /**
+     * 当删除部分提醒时的回调
+     *
+     * @param reminderIds 提醒
+     */
     @Override
     public void onDeleteReminders(String... reminderIds) {
         logger.info("Has received 'delete reminders' action");
