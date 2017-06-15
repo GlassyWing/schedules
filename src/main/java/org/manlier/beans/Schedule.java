@@ -4,8 +4,11 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.manlier.contracts.ScheduleStatus;
 import org.manlier.customs.json.ScheduleStatusSerializer;
+import org.manlier.customs.temporal.TheBeginOfDayAdjuster;
+import org.manlier.customs.temporal.TheEndOfDayAdjuster;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * 日程类
@@ -40,22 +43,27 @@ public class Schedule {
 
     private Integer sortOrder = 0;
 
-    private boolean isAllDay = true;
+    private Boolean isAllDay;
 
     private Integer priority = 0;
 
-    private boolean deleted = false;
+    private Boolean deleted = false;
 
     private Float progress = 0f;
 
     private String title;
 
-    private String summ;
-
     private String content;
 
     @JsonSerialize(using = ScheduleStatusSerializer.class)
     private ScheduleStatus status = ScheduleStatus.UNDONE;
+
+    private Repetition repetition;
+
+    // 此提醒时间用于显示延期后的提醒时间
+    private Instant remindTime;
+
+    private List<Reminder> reminders;
 
     public Schedule() {
     }
@@ -64,9 +72,8 @@ public class Schedule {
         this.title = title;
     }
 
-    public Schedule(String title, String summ, String content) {
+    public Schedule(String title, String content) {
         this.title = title;
-        this.summ = summ;
         this.content = content;
     }
 
@@ -158,11 +165,11 @@ public class Schedule {
         this.sortOrder = sortOrder;
     }
 
-    public boolean isAllDay() {
+    public Boolean isAllDay() {
         return isAllDay;
     }
 
-    public void setAllDay(boolean allDay) {
+    public void setAllDay(Boolean allDay) {
         isAllDay = allDay;
     }
 
@@ -174,11 +181,11 @@ public class Schedule {
         this.priority = priority;
     }
 
-    public boolean isDeleted() {
+    public Boolean isDeleted() {
         return deleted;
     }
 
-    public void setDeleted(boolean deleted) {
+    public void setDeleted(Boolean deleted) {
         this.deleted = deleted;
     }
 
@@ -198,14 +205,6 @@ public class Schedule {
         this.title = title;
     }
 
-    public String getSumm() {
-        return summ;
-    }
-
-    public void setSumm(String summ) {
-        this.summ = summ;
-    }
-
     public String getContent() {
         return content;
     }
@@ -222,58 +221,28 @@ public class Schedule {
         this.status = status;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Schedule schedule = (Schedule) o;
-
-        if (isAllDay != schedule.isAllDay) return false;
-        if (deleted != schedule.deleted) return false;
-        if (!scheduleUuid.equals(schedule.scheduleUuid)) return false;
-        if (!userUuid.equals(schedule.userUuid)) return false;
-        if (parentUuid != null ? !parentUuid.equals(schedule.parentUuid) : schedule.parentUuid != null) return false;
-        if (groupUuid != null ? !groupUuid.equals(schedule.groupUuid) : schedule.groupUuid != null) return false;
-        if (locationUuid != null ? !locationUuid.equals(schedule.locationUuid) : schedule.locationUuid != null)
-            return false;
-        if (!createTime.equals(schedule.createTime)) return false;
-        if (!startTime.equals(schedule.startTime)) return false;
-        if (completeTime != null ? !completeTime.equals(schedule.completeTime) : schedule.completeTime != null)
-            return false;
-        if (!dueTime.equals(schedule.dueTime)) return false;
-        if (!modifyTime.equals(schedule.modifyTime)) return false;
-        if (!sortOrder.equals(schedule.sortOrder)) return false;
-        if (!priority.equals(schedule.priority)) return false;
-        if (!progress.equals(schedule.progress)) return false;
-        if (!title.equals(schedule.title)) return false;
-        if (summ != null ? !summ.equals(schedule.summ) : schedule.summ != null) return false;
-        if (content != null ? !content.equals(schedule.content) : schedule.content != null) return false;
-        return status == schedule.status;
+    public Repetition getRepetition() {
+        return repetition;
     }
 
-    @Override
-    public int hashCode() {
-        int result = scheduleUuid.hashCode();
-        result = 31 * result + userUuid.hashCode();
-        result = 31 * result + (parentUuid != null ? parentUuid.hashCode() : 0);
-        result = 31 * result + (groupUuid != null ? groupUuid.hashCode() : 0);
-        result = 31 * result + (locationUuid != null ? locationUuid.hashCode() : 0);
-        result = 31 * result + createTime.hashCode();
-        result = 31 * result + startTime.hashCode();
-        result = 31 * result + (completeTime != null ? completeTime.hashCode() : 0);
-        result = 31 * result + dueTime.hashCode();
-        result = 31 * result + modifyTime.hashCode();
-        result = 31 * result + sortOrder.hashCode();
-        result = 31 * result + (isAllDay ? 1 : 0);
-        result = 31 * result + priority.hashCode();
-        result = 31 * result + (deleted ? 1 : 0);
-        result = 31 * result + progress.hashCode();
-        result = 31 * result + title.hashCode();
-        result = 31 * result + (summ != null ? summ.hashCode() : 0);
-        result = 31 * result + (content != null ? content.hashCode() : 0);
-        result = 31 * result + status.hashCode();
-        return result;
+    public void setRepetition(Repetition repetition) {
+        this.repetition = repetition;
+    }
+
+    public List<Reminder> getReminders() {
+        return reminders;
+    }
+
+    public void setReminders(List<Reminder> reminders) {
+        this.reminders = reminders;
+    }
+
+    public Instant getRemindTime() {
+        return remindTime;
+    }
+
+    public void setRemindTime(Instant remindTime) {
+        this.remindTime = remindTime;
     }
 
     @Override
@@ -295,9 +264,11 @@ public class Schedule {
                 ", deleted=" + deleted +
                 ", progress=" + progress +
                 ", title='" + title + '\'' +
-                ", summ='" + summ + '\'' +
                 ", content='" + content + '\'' +
                 ", status=" + status +
+                ", repetition=" + repetition +
+                ", remindTime=" + remindTime +
+                ", reminders=" + reminders +
                 '}';
     }
 }

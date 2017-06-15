@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.manlier.beans.Reminder;
 import org.manlier.providers.interfaces.IReminderService;
 import org.manlier.providers.interfaces.IScheduleService;
+import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,14 +36,14 @@ public class ReminderServiceTest extends BaseServiceTest {
     }
 
     @Test
-    public void addReminders() throws ParseException {
+    public void addReminders() throws ParseException, SchedulerException {
         List<Reminder> reminders = Arrays.asList(new Reminder("PT3M"), new Reminder("PT2S"));
-        boolean added = reminderService.addRemindersForSchedule(defaultScheduleId, reminders);
-        Assert.assertTrue(added);
+        List<Reminder> added = reminderService.addRemindersForSchedule(defaultScheduleId, reminders);
+        Assert.assertNotNull(added);
     }
 
     @Test
-    public void removeReminders() {
+    public void removeReminders() throws SchedulerException {
         String[] ids = new String[]{"f16cb96b4b7611e7ac0754a050631fca", "f17a161c4b7611e7ac0754a050631fca"};
         boolean removed = reminderService.removeReminders(ids);
         Assert.assertTrue(removed);
@@ -50,7 +51,7 @@ public class ReminderServiceTest extends BaseServiceTest {
     }
 
     @Test
-    public void removeAllReminders() {
+    public void removeAllReminders() throws SchedulerException {
         boolean removed = reminderService.removeAllRemindersForSchedule("fc809b874b6811e7ac0754a050631fca");
         Assert.assertTrue(removed);
 

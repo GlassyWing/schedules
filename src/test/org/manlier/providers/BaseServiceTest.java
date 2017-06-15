@@ -11,6 +11,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"classpath:spring/spring-providers.xml"
         , "classpath:spring/spring-model.xml"
+        , "classpath:spring/spring-core.xml"
         , "classpath:spring/spring-quartz-config.xml"})
 public class BaseServiceTest {
 

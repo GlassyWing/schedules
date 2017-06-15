@@ -25,11 +25,14 @@ public class Repetition {
 
     private String scheduleUuid;
 
+    // 重复直到指定的日期
     private Instant until;
 
+    // 重复策略
     @JsonSerialize(using = ScheduleStatusSerializer.class)
     private ScheduleStatus repeatOn;
 
+    // 重复表达式
     @JsonSerialize(using = CronSerializer.class)
     @JsonDeserialize(using = CronDeserializer.class)
     private CronExpression cron;

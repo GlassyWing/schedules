@@ -2,6 +2,7 @@ package org.manlier.models;
 
 import org.apache.ibatis.annotations.Param;
 import org.manlier.beans.Project;
+import org.manlier.beans.Schedule;
 
 import java.util.List;
 
@@ -21,7 +22,7 @@ public interface ProjectDao {
     /**
      * 添加清单
      *
-     * @param userId 用户Id
+     * @param userId  用户Id
      * @param project 清单
      * @return 添加数量
      */
@@ -51,6 +52,22 @@ public interface ProjectDao {
      * @return 清单
      */
     List<Project> getAllProjectsForUserExcept(@Param("userId") String userId, @Param("exceptProjectId") String exceptProjectId);
+
+    /**
+     * 查找用户的所有清单
+     *
+     * @param userId 用户id
+     * @return 清单
+     */
+    List<Project> getAllProjectsForUser(@Param("userId") String userId);
+
+    /**
+     * 获得当前清单下的所有日程
+     *
+     * @param projectId 清单id
+     * @return 所有日程
+     */
+    List<Schedule> getAllSchedulesForProject(@Param("projectId") String projectId);
 
 
 }

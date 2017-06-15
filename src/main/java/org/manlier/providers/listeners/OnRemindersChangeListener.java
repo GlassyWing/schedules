@@ -1,7 +1,11 @@
 package org.manlier.providers.listeners;
 
 import org.manlier.beans.Reminder;
+import org.manlier.beans.Repetition;
+import org.manlier.beans.Schedule;
+import org.quartz.SchedulerException;
 
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -9,5 +13,9 @@ import java.util.List;
  */
 public interface OnRemindersChangeListener {
 
-    public void onRemindersChange(List<Reminder> newReminders);
+    void onDeleteReminders(String... reminderIds);
+
+    void onClearReminders(String scheduleId);
+
+    void onSetReminders(String scheduleId,  List<Reminder> reminders);
 }

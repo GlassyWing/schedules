@@ -39,7 +39,7 @@ public class RepetitionModelTest extends DBConnectTest {
         Repetition repetition = repetitionDao.getRepetitionByScheduleId(scheduleId);
         System.out.println(repetition);
         repetition.setCron(new CronExpression("5 0 23 5/1 * ?"));
-        int affected = repetitionDao.updateRepetition(repetition);
+        int affected = repetitionDao.updateRepetitionForSchedule(scheduleId, repetition);
         Assert.assertEquals(1, affected);
     }
 

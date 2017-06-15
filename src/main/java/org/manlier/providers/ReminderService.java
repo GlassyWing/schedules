@@ -1,13 +1,16 @@
 package org.manlier.providers;
 
 import org.manlier.beans.Reminder;
-import org.manlier.beans.Schedule;
 import org.manlier.models.ReminderDao;
-import org.manlier.providers.interfaces.IScheduleService;
+import org.manlier.providers.interfaces.IReminderService;
+import org.manlier.providers.listeners.OnRemindersChangeListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -16,21 +19,18 @@ import java.util.List;
  */
 @SuppressWarnings("SpringJavaAutowiringInspection")
 @Service
-public class ReminderService implements org.manlier.providers.interfaces.IReminderService {
+public class ReminderService implements IReminderService {
 
     private final ReminderDao reminderDao;
 
-    private IScheduleService scheduleService;
+    private Logger logger = LoggerFactory.getLogger(ReminderService.class);
 
+    @Resource
+    private OnRemindersChangeListener listener;
 
     @Autowired
     public ReminderService(ReminderDao reminderDao) {
         this.reminderDao = reminderDao;
-    }
-
-    @Autowired
-    public void setScheduleService(IScheduleService scheduleService) {
-        this.scheduleService = scheduleService;
     }
 
     /**
@@ -53,15 +53,14 @@ public class ReminderService implements org.manlier.providers.interfaces.IRemind
      */
     @Override
     @Transactional
-    public boolean addRemindersForSchedule(String scheduleId, List<Reminder> reminders) {
-        boolean success = true;
+    public List<Reminder> addRemindersForSchedule(String scheduleId, List<Reminder> reminders) {
         for (Reminder reminder :
                 reminders) {
-            if (!addSingleReminderForSchedule(scheduleId, reminder)) {
-                success = false;
-            }
+            addSingleReminderForSchedule(scheduleId, reminder);
         }
-        return success;
+        logger.info("All reminders added! Try to notify listener");
+        listener.onSetReminders(scheduleId, reminders);
+        return reminders;
     }
 
     /**
@@ -71,11 +70,11 @@ public class ReminderService implements org.manlier.providers.interfaces.IRemind
      * @param reminder   提醒
      * @return 添加的结果
      */
-    @Override
-    public boolean addSingleReminderForSchedule(String scheduleId, Reminder reminder) {
-        Schedule schedule = scheduleService.getScheduleById(scheduleId);
-        if (schedule.getStartTime() == null)
-            throw new IllegalStateException("The schedule's start time must be set!");
+    @Transactional
+    private boolean addSingleReminderForSchedule(String scheduleId, Reminder reminder) {
+//        Schedule schedule = scheduleService.getScheduleById(scheduleId);
+//        if (schedule.getStartTime() == null)
+//            throw new IllegalStateException("The schedule's start time must be set!");
         return reminderDao.addReminderForSchedule(scheduleId, reminder) == 1;
     }
 
@@ -86,8 +85,14 @@ public class ReminderService implements org.manlier.providers.interfaces.IRemind
      * @return 移除结果
      */
     @Override
+    @Transactional
     public boolean removeReminders(String... ids) {
-        return reminderDao.deleteReminder(ids) == ids.length;
+        if (reminderDao.deleteReminder(ids) == ids.length) {
+            logger.info("Delete reminders done! Try to notify listener");
+            listener.onDeleteReminders(ids);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -97,8 +102,25 @@ public class ReminderService implements org.manlier.providers.interfaces.IRemind
      * @return 移除结果
      */
     @Override
+    @Transactional
     public boolean removeAllRemindersForSchedule(String scheduleId) {
-        return reminderDao.deleteAllRemindersForSchedule(scheduleId) != -1;
+        if (reminderDao.deleteAllRemindersForSchedule(scheduleId) != -1) {
+            logger.info("Clear all reminders done! Try to notify listener");
+            listener.onClearReminders(scheduleId);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    @Transactional
+    public List<Reminder> setRemindersForSchedule(String scheduleId, List<Reminder> reminders) {
+        List<Reminder> oldReminders = reminderDao.getAllReminderForSchedule(scheduleId);
+        if (oldReminders != null) {
+            removeAllRemindersForSchedule(scheduleId);
+        }
+
+        return addRemindersForSchedule(scheduleId, reminders);
     }
 
 }

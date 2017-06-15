@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--suppress SqlDialectInspection -->
+<mapper namespace="org.manlier.models.PreferencesDao">
+
+    <select id="getPreferencesForUser" resultType="Preferences">
+        SELECT * FROM preferences
+        WHERE user_uuid = #{userId}
+    </select>
+
+    <update id="updatePreferences" parameterType="org.manlier.beans.Preferences">
+        UPDATE preferences
+        <trim prefixOverrides=", " prefix="set">
+            <if test="preferences.startDayOfWeek != null">
+                start_day_of_week = #{preferences.startDayOfWeek}
+            </if>
+            <if test="preferences.defaultRemindBefore != null">
+                , default_remind_before = #{preferences.defaultRemindBefore}
+            </if>
+            <if test="preferences.dailyRemindTime != null">
+                , daily_remind_time = #{preferences.dailyRemindTime}
+            </if>
+            <if test="preferences.defaultPriority != null">
+                , default_priority = #{preferences.defaultPriority}
+            </if>
+            <if test="preferences.lastSettingTimeZone != null">
+                , last_setting_time_zone = #{preferences.lastSettingTimeZone, typeHandler=org.manlier.models.typehandlers.ZoneIdTypeHandler}
+            </if>
+            <if test="preferences.dailyRemindToggle != null">
+                , daily_remind_toggle = #{preferences.dailyRemindToggle}
+            </if>
+        </trim>
+        WHERE preferences_uuid = #{preferences.preferencesUuid}
+    </update>
+
+</mapper>

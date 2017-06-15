@@ -75,22 +75,30 @@ public class ScheduleModelTest extends UserModelTest {
         Assert.assertEquals(affectedNum, 1);
     }
 
-    @Test
-    public void findSpecTimePeriod() {
-        // 于2017-06-05 08:00:00 开始
-        Instant startTime = Instant.parse("2017-06-05T00:00:00.000Z");
-        // 于2017-06-10 08:00:00 结束
-        Instant endTime = Instant.parse("2017-06-10T00:00:00.000Z");
-        String userId = "97147179147198497";
-        List<Schedule> schedules = scheduleDao.findSchedulesDuringTimePeriod(userId, startTime, endTime);
-        System.out.println(schedules);
-    }
+
 
     @Test
     public void selectAllSchedules() {
         String userId = "97147179147198487";
         List<Schedule> schedules = scheduleDao.getAllSchedulesForUser(userId);
         System.out.println(schedules);
+    }
+
+    @Test
+    public void getAllCompletedSchedules() {
+        String userId = "97177576174256135";
+        Instant fromInstant, toInstant;
+        toInstant = Instant.now();
+
+        List<Schedule> completed = scheduleDao.getAllSchedulesCompletedForUserFrom(userId, null, toInstant, 0);
+        System.out.println(completed);
+    }
+
+    @Test
+    public void getAllUncompletedSchedules() {
+        String userId = "97147179147198498";
+        List<Schedule> uncompleted = scheduleDao.getAllSchedulesUncompletedForUser(userId);
+        System.out.println(uncompleted);
     }
 
     @Test
@@ -153,14 +161,6 @@ public class ScheduleModelTest extends UserModelTest {
         Assert.assertEquals(1, incompleted);
     }
 
-    @Test
-    public void testSetTime() {
-        Instant startTime, dueTime;
-        startTime = Instant.parse("2017-06-10T11:40:00.000Z");
-        dueTime = Instant.parse("2017-06-10T16:00:00.000Z");
-        int affected = scheduleDao.setStartAndDueTime("67eab2234c3b11e7ac0754a050631fca", startTime, dueTime);
-        Assert.assertEquals(1, affected);
-    }
 
 
 }

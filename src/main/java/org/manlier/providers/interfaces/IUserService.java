@@ -8,15 +8,19 @@ import org.springframework.transaction.annotation.Transactional;
  * Created by manlier on 2017/6/7.
  */
 public interface IUserService {
-    boolean addUser(User user);
+    User addUser(User user);
 
     User findUserByAccountAndPassword(String email, String password);
 
     boolean deleteUser(String userId);
 
-    boolean updateUser(User user);
+    User updateUser(User user);
 
     boolean isAccountExists(String email);
 
     boolean isUserExists(User user);
+
+    User getCurrentUser();
+
+    User getUserById(String userId);
 }

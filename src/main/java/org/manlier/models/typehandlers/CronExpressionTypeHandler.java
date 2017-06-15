@@ -25,6 +25,8 @@ public class CronExpressionTypeHandler extends BaseTypeHandler<CronExpression> {
 
     @Override
     public CronExpression getNullableResult(ResultSet rs, String columnName) throws SQLException {
+        if (rs.getString(columnName) == null)
+            return null;
         try {
             return new CronExpression(rs.getString(columnName));
         } catch (ParseException e) {
@@ -34,6 +36,8 @@ public class CronExpressionTypeHandler extends BaseTypeHandler<CronExpression> {
 
     @Override
     public CronExpression getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
+        if (rs.getString(columnIndex) == null)
+            return null;
         try {
             return new CronExpression(rs.getString(columnIndex));
         } catch (ParseException e) {
@@ -43,6 +47,8 @@ public class CronExpressionTypeHandler extends BaseTypeHandler<CronExpression> {
 
     @Override
     public CronExpression getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
+        if (cs.getString(columnIndex) == null)
+            return null;
         try {
             return new CronExpression(cs.getString(columnIndex));
         } catch (ParseException e) {

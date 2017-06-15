@@ -14,11 +14,11 @@ import java.util.List;
 public interface IReminderService {
     List<Reminder> getAllReminderForSchedule(String schedulerId);
 
-    boolean addRemindersForSchedule(String scheduleId, List<Reminder> reminders);
-
-    boolean addSingleReminderForSchedule(String scheduleId, Reminder reminder);
+    List<Reminder> addRemindersForSchedule(String scheduleId, List<Reminder> reminders);
 
     boolean removeReminders(String... ids);
 
     boolean removeAllRemindersForSchedule(String scheduleId);
+
+    List<Reminder> setRemindersForSchedule(String scheduleId, List<Reminder> reminders);
 }

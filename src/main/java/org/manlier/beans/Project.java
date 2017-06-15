@@ -1,7 +1,7 @@
 package org.manlier.beans;
 
 /**
- * 清单类
+ * 清单/计划类
  * Created by manlier on 2017/6/4.
  */
 public class Project {
@@ -10,6 +10,7 @@ public class Project {
 
     private String userUuid;
 
+    // 计划标题
     private String title;
 
     public Project(String title) {

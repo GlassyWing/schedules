@@ -3,16 +3,17 @@ package org.manlier.providers;
 import org.manlier.beans.Repetition;
 import org.manlier.beans.Schedule;
 import org.manlier.contracts.ScheduleStatus;
-import org.manlier.customs.temporal.TheBeginOfDayAdjuster;
-import org.manlier.customs.temporal.TheEndOfDayAdjuster;
-import org.manlier.models.RepetitionDao;
 import org.manlier.models.ScheduleDao;
-import org.manlier.providers.interfaces.IProjectService;
-import org.manlier.providers.interfaces.IScheduleService;
+import org.manlier.providers.interfaces.*;
+import org.manlier.providers.listeners.OnScheduleStatusChangeListener;
+import org.quartz.SchedulerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.security.InvalidParameterException;
 import java.time.Duration;
 import java.time.Instant;
@@ -27,22 +28,31 @@ import java.util.List;
 @Service
 public class ScheduleService implements IScheduleService {
 
+    // 日程数据库访问对象
     private ScheduleDao scheduleDao;
 
-    private RepetitionDao repetitionDao;
+    // 重复规则数据库访问对象
+    @Resource
+    private IRepetitionService repetitionService;
 
+    // 清单服务
+    @Resource
     private IProjectService projectService;
 
+    // 提醒服务
+    @Resource
+    private IReminderService reminderService;
+
+    @Resource
+    private OnScheduleStatusChangeListener listener;
+
+    // 日志记录
+    private Logger logger = LoggerFactory.getLogger(ScheduleService.class);
+
 
     @Autowired
-    public ScheduleService(ScheduleDao scheduleDao, RepetitionDao repetitionDao) {
+    public ScheduleService(ScheduleDao scheduleDao) {
         this.scheduleDao = scheduleDao;
-        this.repetitionDao = repetitionDao;
-    }
-
-    @Autowired
-    public void setProjectService(IProjectService projectService) {
-        this.projectService = projectService;
     }
 
     /**
@@ -53,47 +63,35 @@ public class ScheduleService implements IScheduleService {
      * @return 添加结果
      */
     @Override
-    public boolean addScheduleForUser(String userId, Schedule schedule) {
+    @Transactional
+    public Schedule addScheduleForUser(String userId, Schedule schedule) {
         // 如果该日程不属于任何清单，则设置为收集箱
         if (schedule.getGroupUuid() == null) {
             schedule.setGroupUuid(projectService.getInboxPrefix() + userId);
         }
 
-        if (schedule.isAllDay()) {
-            Instant srcStartTime = schedule.getStartTime();
-            if (srcStartTime != null) {
-                schedule.setDueTime(schedule.getStartTime()
-                        .plus(Duration.ofDays(1)));
+        boolean affected =
+                scheduleDao.addScheduleForUser(userId, schedule) == 1;
+
+        if (!affected) return null;
+
+        // 如果当前日程设置了日期（不管有没有设置时间）
+        if (schedule.isAllDay() != null) {
+
+            // 如果配置了提醒，则添加提醒
+            if (schedule.getReminders() != null) {
+                reminderService.addRemindersForSchedule(schedule.getScheduleUuid(), schedule.getReminders());
+            }
+
+            // 如果配置了重复，则设置重复
+            if (schedule.getRepetition() != null) {
+                repetitionService.setRepetitionForSchedule(schedule.getScheduleUuid(), schedule.getRepetition());
             }
         }
 
-        return scheduleDao.addScheduleForUser(userId, schedule) == 1;
-    }
+        logger.info("Schedule {} has added.", schedule.getScheduleUuid());
 
-    /**
-     * 设置开始与到期日期
-     *
-     * @param scheduleId 日程id
-     * @param startTime  开始日期
-     * @param dueTime    到期日期
-     * @return 设置操作结果
-     */
-    @Override
-    @Transactional
-    public boolean setStartTimeAndDueTime(String scheduleId, Instant startTime, Instant dueTime) {
-
-        if (!startTime.isBefore(dueTime)) {
-            throw new IllegalStateException("The start time: " + startTime + " is after the due time: " + dueTime);
-        }
-
-        Schedule schedule = getScheduleById(scheduleId);
-
-        // 如果日程为全天的话，重新配置到期日期
-        if (schedule.isAllDay()) {
-            dueTime = startTime.with(new TheEndOfDayAdjuster());
-        }
-
-        return scheduleDao.setStartAndDueTime(scheduleId, startTime, dueTime) == 1;
+        return schedule;
     }
 
     /**
@@ -103,6 +101,7 @@ public class ScheduleService implements IScheduleService {
      * @return 日程
      */
     @Override
+    @Transactional
     public Schedule getScheduleById(String scheduleId) {
         return scheduleDao.getScheduleByScheduleId(scheduleId);
     }
@@ -114,8 +113,40 @@ public class ScheduleService implements IScheduleService {
      * @return 更新结果
      */
     @Override
-    public boolean updateSchedule(Schedule schedule) {
-        return scheduleDao.updateSchedule(schedule) == 1;
+    @Transactional
+    public Schedule updateSchedule(Schedule schedule) {
+
+        boolean updated = scheduleDao.updateSchedule(schedule) == 1;
+
+        if (!updated) return null;
+
+        // 如果无重复规则
+        if (schedule.getRepetition() == null) {
+            // 取消重复
+            repetitionService
+                    .cancelRepetitionForSchedule(schedule.getScheduleUuid());
+        } else {
+            // 设置重复规则
+            repetitionService
+                    .setRepetitionForSchedule(schedule.getScheduleUuid()
+                            , schedule.getRepetition());
+        }
+
+        // 如果取消了所有提醒
+        if (schedule.getReminders() == null) {
+            // 清空提醒
+            reminderService
+                    .removeAllRemindersForSchedule(schedule.getScheduleUuid());
+        } else {
+            // 设置提醒
+            reminderService
+                    .setRemindersForSchedule(schedule.getScheduleUuid()
+                            , schedule.getReminders());
+        }
+
+        logger.info("Schedule {} has be updated", schedule.getScheduleUuid());
+
+        return schedule;
     }
 
     /**
@@ -125,6 +156,7 @@ public class ScheduleService implements IScheduleService {
      * @return 删除结果
      */
     @Override
+    @Transactional
     public boolean deleteSchedule(String scheduleId) {
         return scheduleDao.deleteSchedule(scheduleId) == 1;
     }
@@ -136,8 +168,34 @@ public class ScheduleService implements IScheduleService {
      * @return 日程
      */
     @Override
+    @Transactional
     public List<Schedule> getAllSchedulesForUser(String userId) {
         return scheduleDao.getAllSchedulesForUser(userId);
+    }
+
+    /**
+     * 根据指定的日期段获取已完成的日程
+     *
+     * @param userId 用户id
+     * @param from   开始日期
+     * @param to     结束日期
+     * @param limit  数量现在
+     * @return 日程
+     */
+    @Override
+    public List<Schedule> getAllSchedulesCompletedForUserFrom(String userId, Instant from, Instant to, int limit) {
+        return scheduleDao.getAllSchedulesCompletedForUserFrom(userId, from, to, limit);
+    }
+
+    /**
+     * 获取所有未完成的日程
+     *
+     * @param userId 用户id
+     * @return 未完成的日程
+     */
+    @Override
+    public List<Schedule> getAllSchedulesUncompletedForUser(String userId) {
+        return scheduleDao.getAllSchedulesUncompletedForUser(userId);
     }
 
     /**
@@ -147,8 +205,17 @@ public class ScheduleService implements IScheduleService {
      * @return 回收结果
      */
     @Override
-    public boolean recycleSchedule(String scheduleId) {
-        return scheduleDao.recycleSchedule(scheduleId) == 1;
+    @Transactional
+    public Schedule recycleSchedule(String scheduleId) {
+        // 回收日程
+        if (scheduleDao.recycleSchedule(scheduleId) != 1)
+            return null;
+
+        Schedule schedule = getScheduleById(scheduleId);
+
+        listener.onRecycleSchedule(schedule);
+
+        return schedule;
     }
 
     /**
@@ -158,50 +225,64 @@ public class ScheduleService implements IScheduleService {
      * @return 恢复结果
      */
     @Override
-    public boolean restoreSchedule(String scheduleId) {
-        return scheduleDao.restoreSchedule(scheduleId) == 1;
+    @Transactional
+    public Schedule restoreSchedule(String scheduleId) {
+        // 恢复日程
+        if (scheduleDao.restoreSchedule(scheduleId) != 1)
+            return null;
+
+        Schedule schedule = getScheduleById(scheduleId);
+
+        listener.onRecycleSchedule(schedule);
+        return schedule;
     }
 
     /**
-     * 完成日程
+     * 设置日程为已完成
      *
      * @param scheduleId 日程id
-     * @return 完成结果
+     * @return 完成后的日程或者新建的日程
      */
     @Override
     @Transactional
-    public boolean completeSchedule(String scheduleId) {
+    public Schedule completeSchedule(String scheduleId) {
 
-        boolean isCompleted;
+        boolean completed;
 
         // 将当前日程设为已完成
-        isCompleted = scheduleDao.completeSchedule(scheduleId) == 1;
+        completed = scheduleDao.completeSchedule(scheduleId) == 1;
 
-        Repetition repetition = repetitionDao
-                .getRepetitionByScheduleId(scheduleId);
+        if (!completed) {
+            return null;
+        }
+
+        // 获得当前日程
+        Schedule schedule = getScheduleById(scheduleId);
+
+        logger.info("To be complete: {}", schedule);
+
+        // 取消上一次日程的重复与提醒
+        repetitionService.cancelRepetitionForSchedule(scheduleId);
+        reminderService.removeAllRemindersForSchedule(scheduleId);
+
+        // 获得有关当前日程的重复规则
+        Repetition repetition = schedule.getRepetition();
 
         // 如果需要重复, 试图创建下一个日程
         if (repetition != null) {
 
-            // 获得当前日程
-            Schedule schedule = getScheduleById(scheduleId);
-
             // 试图建立新的日程
             if (buildRepeatSchedule(schedule, repetition)) {
-                // 建立成功则添加日程
+                // 建立成功则添加新的日程
                 addScheduleForUser(schedule.getUserUuid(), schedule);
-                // 为新的日程设置重复
-                setRepetitionForSchedule(schedule.getScheduleUuid()
-                        , repetition);
-                // 取消上一次日程的重复
-                cancelRepetition(scheduleId);
             }
         }
-        return isCompleted;
+
+        return schedule;
     }
 
     /**
-     * 建立下一次日程
+     * 基于重复规则建立指定日程后的下一个日程
      *
      * @param schedule   待重复的日程
      * @param repetition 重复规则
@@ -238,6 +319,7 @@ public class ScheduleService implements IScheduleService {
         schedule.setStatus(ScheduleStatus.UNDONE);
         schedule.setStartTime(newStartTime);
         schedule.setDueTime(newDueTime);
+        schedule.setProgress(0f);
         return true;
     }
 
@@ -248,8 +330,17 @@ public class ScheduleService implements IScheduleService {
      * @return 设置结果
      */
     @Override
-    public boolean incompleteSchedule(String scheduleId) {
-        return scheduleDao.incompleteSchedule(scheduleId) == 1;
+    @Transactional
+    public Schedule incompleteSchedule(String scheduleId) {
+        if (scheduleDao.incompleteSchedule(scheduleId) != 1)
+            return null;
+
+        Schedule schedule = getScheduleById(scheduleId);
+
+        listener.onIncompleteSchedule(schedule);
+
+        return schedule;
+
     }
 
     /**
@@ -283,67 +374,5 @@ public class ScheduleService implements IScheduleService {
     @Override
     public List<Schedule> getAllSchedulesByProjectId(String projectId) {
         return scheduleDao.getAllSchedulesByProjectId(projectId);
-    }
-
-    /**
-     * 查找指定时间间隔内的日程
-     *
-     * @param userId    用户id
-     * @param beginTime 开始时间
-     * @param endTime   结束时间
-     * @return 日程
-     */
-    @Override
-    public List<Schedule> findSchedulesDuringTimePeriod(String userId, Instant beginTime, Instant endTime) {
-        return scheduleDao.findSchedulesDuringTimePeriod(userId, beginTime, endTime);
-    }
-
-
-    /**
-     * 获得日程的重复规则
-     *
-     * @param scheduleId 日程id
-     * @return 重复规则
-     */
-    @Override
-    public Repetition getRepetitionForSchedule(String scheduleId) {
-        return repetitionDao.getRepetitionByScheduleId(scheduleId);
-    }
-
-    /**
-     * 取消日程的重复
-     *
-     * @param scheduleId 日程id
-     * @return 取消结果
-     */
-    @Override
-    public boolean cancelRepetition(String scheduleId) {
-        return repetitionDao.deleteRepetition(scheduleId) == 1;
-    }
-
-    /**
-     * 变更重复规则
-     *
-     * @param repetition 重复规则
-     * @return 变更结果
-     */
-    @Override
-    public boolean changeRepetition(Repetition repetition) {
-        return repetitionDao.updateRepetition(repetition) == 1;
-    }
-
-    /**
-     * 为日程设置重复
-     *
-     * @param scheduleId 日程id
-     * @param repetition 重复规则
-     * @return 设置结果
-     */
-    @Override
-    public boolean setRepetitionForSchedule(String scheduleId, Repetition repetition) {
-        Schedule schedule = getScheduleById(scheduleId);
-        if (schedule.getStartTime() == null)
-            throw new IllegalStateException("The start time of schedule must be set");
-        return repetitionDao.addRepetitionForSchedule(scheduleId, repetition) == 1;
     }
 }

@@ -1,5 +1,6 @@
 package org.manlier.models;
 
+import com.sun.istack.internal.Nullable;
 import org.apache.ibatis.annotations.Param;
 import org.manlier.beans.Schedule;
 
@@ -93,17 +94,6 @@ public interface ScheduleDao {
     int deleteAllRecycledSchedulesForUser(@Param("userId") String userId);
 
     /**
-     * 查找指定时间间隔内的日程
-     * 时间以时间戳格式提供
-     *
-     * @param userId    用户Id
-     * @param beginTime 开始时间
-     * @param endTime   结束时间
-     * @return 日程
-     */
-    List<Schedule> findSchedulesDuringTimePeriod(@Param("userId") String userId, @Param("beginTime") Instant beginTime, @Param("endTime") Instant endTime);
-
-    /**
      * 选择指定用户的所有日程
      *
      * @param userId 用户Id
@@ -112,20 +102,29 @@ public interface ScheduleDao {
     List<Schedule> getAllSchedulesForUser(String userId);
 
     /**
+     * 通过指定的时间限制，获得所有已完成的日程
+     *
+     * @param userId 用户id
+     * @return 日程
+     */
+    List<Schedule> getAllSchedulesCompletedForUserFrom(@Param("userId") String userId
+            , @Param("from") @Nullable Instant from
+            , @Param("to") Instant to
+            , @Param("limit") Integer limit);
+
+    /**
+     * 获得所有未完成的日程
+     *
+     * @param userId 用户
+     * @return 未完成的日程
+     */
+    List<Schedule> getAllSchedulesUncompletedForUser(@Param("userId") String userId);
+
+    /**
      * 查找指定清单下的所有日程
      *
      * @param projectId 清单id
      * @return 日程
      */
     List<Schedule> getAllSchedulesByProjectId(String projectId);
-
-    /**
-     * 设置开始和完成时间
-     *
-     * @param scheduleId 日程id
-     * @param startTime 开始时间
-     * @param dueTime 完成时间
-     * @return 更新数量
-     */
-    int setStartAndDueTime(@Param("scheduleId") String scheduleId, @Param("startTime") Instant startTime, @Param("dueTime") Instant dueTime);
 }

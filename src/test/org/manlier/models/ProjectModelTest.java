@@ -21,11 +21,21 @@ public class ProjectModelTest extends DBConnectTest {
     @SuppressWarnings("SpringJavaAutowiringInspection")
     private UserDao userDao;
 
+    private String defaultUserId = "97147179147198498";
+
     @Test
     public void getProject() {
         Project project = projectDao.getProjectByProjectId("inbox_97147179147198488");
         System.out.println(project);
     }
+
+    @Test
+    public void getProjectForUser() {
+        List<Project> projects = projectDao.getAllProjectsForUser(defaultUserId);
+        Assert.assertNotNull(projects);
+        System.out.println(projects);
+    }
+
 
     @Test
     public void addProject() {

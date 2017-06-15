@@ -67,4 +67,20 @@ public class BaseResult<T> implements IResult<T> {
                 ", burden=" + burden +
                 '}';
     }
+
+    public static <R> BaseResult<R> success() {
+        return new BaseResult<>(Result.SUCCESS, null);
+    }
+
+    public static <R> BaseResult<R> fail() {
+        return new BaseResult<>(Result.FAIL, null);
+    }
+
+    public static <R> BaseResult<R> success(R burden) {
+        return new BaseResult<>(Result.SUCCESS, burden);
+    }
+
+    public static <R> BaseResult<R> fail(R burden) {
+        return new BaseResult<>(Result.FAIL, burden);
+    }
 }

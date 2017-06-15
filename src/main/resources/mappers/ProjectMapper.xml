@@ -32,10 +32,22 @@
         WHERE user_uuid = #{userId} AND project_uuid != #{exceptProjectId}
     </select>
 
+    <select id="getAllProjectsForUser" resultType="Project">
+        SELECT * FROM project
+        WHERE user_uuid = #{userId}
+    </select>
+
     <!--删除清单-->
     <delete id="deleteProject">
         DELETE FROM project
         WHERE project_uuid = #{projectId}
     </delete>
+
+    <!--获得该清单下的所有日程-->
+    <select id="getAllSchedulesForProject" resultType="Schedule">
+        SELECT * FROM schedule_view
+        WHERE group_uuid = #{projectId}
+        AND deleted = 0
+    </select>
 
 </mapper>

@@ -6,8 +6,35 @@
 <mapper namespace="org.manlier.models.ScheduleDao">
 
     <resultMap id="scheduleMap" type="org.manlier.beans.Schedule">
+        <id property="scheduleUuid" column="schedule_uuid"/>
+        <result property="userUuid" column="user_uuid"/>
+        <result property="parentUuid" column="parent_uuid"/>
+        <result property="groupUuid" column="group_uuid"/>
+        <result property="locationUuid" column="location_uuid"/>
+        <result property="createTime" column="create_time"/>
+        <result property="startTime" column="start_time"/>
+        <result property="completeTime" column="complete_time"/>
+        <result property="dueTime" column="due_time"/>
+        <result property="modifyTime" column="modify_time"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="isAllDay" column="is_all_day"/>
+        <result property="priority" column="priority"/>
+        <result property="deleted" column="deleted"/>
+        <result property="progress" column="progress"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
         <result column="status" property="status" jdbcType="NUMERIC"
                 typeHandler="org.apache.ibatis.type.EnumOrdinalTypeHandler"/>
+        <association property="repetition" javaType="Repetition">
+            <result property="repetitionUuid" column="repetition_uuid"/>
+            <result property="until" column="until"/>
+            <result property="repeatOn" column="repeat_on"/>
+            <result property="cron" column="cron"/>
+        </association>
+        <collection property="reminders" ofType="Reminder">
+            <result property="reminderUuid" column="reminder_uuid"/>
+            <result property="duration" column="duration"/>
+        </collection>
     </resultMap>
 
     <!--为用户添加日程-->
@@ -19,7 +46,7 @@
         INSERT INTO schedule (schedule_uuid, user_uuid, parent_uuid, group_uuid, location_uuid,
         start_time, complete_time, due_time, modify_time,
         sort_order, is_all_day, priority, deleted, progress,
-        title, summ, content,
+        title, content,
         status)
         VALUES
         (#{schedule.scheduleUuid}, #{userId}, #{schedule.parentUuid}, #{schedule.groupUuid}, #{schedule.locationUuid},
@@ -28,13 +55,13 @@
         #{schedule.dueTime},
         #{schedule.modifyTime},
         #{schedule.sortOrder}, #{schedule.isAllDay}, #{schedule.priority}, #{schedule.deleted}, #{schedule.progress},
-        #{schedule.title}, #{schedule.summ}, #{schedule.content},
+        #{schedule.title}, #{schedule.content},
         #{schedule.status, typeHandler=org.apache.ibatis.type.EnumOrdinalTypeHandler})
     </insert>
 
     <!--通过日程id获得日程-->
     <select id="getScheduleByScheduleId" resultMap="scheduleMap">
-        SELECT * FROM schedule_view
+        SELECT * FROM schedule_detail_view
         WHERE schedule_uuid = #{scheduleId}
     </select>
 
@@ -42,38 +69,23 @@
     <update id="updateSchedule">
         UPDATE schedule
         SET
-        is_all_day = #{schedule.isAllDay},
-        sort_order = #{schedule.sortOrder},
-        priority = #{schedule.priority},
-        deleted = #{schedule.deleted},
-        progress = #{schedule.progress},
+        is_all_day = #{schedule.isAllDay}
+        , sort_order = #{schedule.sortOrder}
+        , priority = #{schedule.priority}
+        , deleted = #{schedule.deleted}
+        , progress = #{schedule.progress}
+        , content = #{schedule.content}
+        , start_time = #{schedule.startTime}
+        , complete_time = #{schedule.completeTime}
+        , due_time = #{schedule.dueTime}
+        , parent_uuid = #{schedule.parentUuid}
+        , group_uuid = #{schedule.groupUuid}
+        , location_uuid = #{schedule.locationUuid}
         <if test="schedule.title != null">
-            title = #{schedule.title}
+            , title = #{schedule.title}
         </if>
-        <if test="schedule.summ != null">
-            , summ = #{schedule.summ}
-        </if>
-        <if test="schedule.content != null">
-            ,content = #{schedule.content}
-        </if>
-        <if test="schedule.startTime != null">
-            , start_time = #{schedule.startTime}
-        </if>
-        <if test="schedule.completeTime != null">
-            , complete_time =
-            #{schedule.completeTime}
-        </if>
-        <if test="schedule.dueTime != null">
-            , due_time = #{schedule.dueTime}
-        </if>
-        <if test="schedule.parentUuid != null">
-            , parent_uuid = #{schedule.parentUuid}
-        </if>
-        <if test="schedule.groupUuid != null">
-            , group_uuid = #{schedule.groupUuid}
-        </if>
-        <if test="schedule.locationUuid != null">
-            , location_uuid = #{schedule.locationUuid}
+        <if test="schedule.status != null">
+            , status = #{schedule.status}
         </if>
         WHERE schedule_uuid = #{schedule.scheduleUuid}
     </update>
@@ -84,29 +96,39 @@
         WHERE schedule_uuid = #{scheduleId}
     </delete>
 
-    <!--查询指定时间间隔内的日程-->
-    <select id="findSchedulesDuringTimePeriod" resultMap="scheduleMap">
-        SELECT * FROM schedule_view
-        WHERE
-        date_format(start_time, '%Y-%m-%d %H:%i:%S') > #{beginTime}
-        AND
-        date_format(start_time, '%Y-%m-%d %H:%i:%S') &lt; #{endTime}
-        AND
-        user_uuid = #{userId}
-        AND
-        deleted = 0
-    </select>
-
     <!--获得所有日程-->
     <select id="getAllSchedulesForUser" resultMap="scheduleMap">
-        SELECT * FROM schedule_view
+        SELECT * FROM schedule_detail_view
         WHERE user_uuid = #{userId}
         AND deleted = 0
     </select>
 
+    <!--获得所有已完成的日程并指定开始和结束日期以及数量限制-->
+    <select id="getAllSchedulesCompletedForUserFrom" resultMap="scheduleMap">
+        SELECT * FROM schedule_detail_view
+        WHERE user_uuid = #{userId}
+        AND status = 2
+        <if test="from != null">
+            AND complete_time > #{from}
+        </if>
+        <if test="to != null">
+            AND complete_time &lt; #{to}
+        </if>
+        <if test="limit != null">
+            limit #{limit}
+        </if>
+    </select>
+
+    <!--获取所有未完成的日程-->
+    <select id="getAllSchedulesUncompletedForUser" resultMap="scheduleMap">
+        SELECT * FROM schedule_detail_view
+        WHERE user_uuid = #{userId}
+        AND status != 2
+    </select>
+
     <!--获得当前清单下的所有日程-->
     <select id="getAllSchedulesByProjectId" resultMap="scheduleMap">
-        SELECT * FROM schedule_view
+        SELECT * FROM schedule_detail_view
         WHERE group_uuid = #{projectId}
         AND deleted = 0
     </select>
@@ -150,17 +172,9 @@
 
     <!--获得回收站中所有日程-->
     <select id="getAllRecycledSchedulesForUser" resultMap="scheduleMap">
-        SELECT * FROM schedule_view
+        SELECT * FROM schedule_detail_view
         WHERE user_uuid = #{userId}
         AND deleted = 1
     </select>
-
-    <!--设置开始与结束时间-->
-    <update id="setStartAndDueTime">
-        UPDATE schedule
-        set start_time = #{startTime}
-        , due_time = #{dueTime}
-        WHERE schedule_uuid = #{scheduleId}
-    </update>
 
 </mapper>

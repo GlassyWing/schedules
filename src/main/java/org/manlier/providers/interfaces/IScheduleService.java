@@ -1,7 +1,9 @@
 package org.manlier.providers.interfaces;
 
+import org.manlier.beans.Reminder;
 import org.manlier.beans.Repetition;
 import org.manlier.beans.Schedule;
+import org.quartz.SchedulerException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,40 +15,32 @@ import java.util.List;
  */
 @Service
 public interface IScheduleService {
-    boolean addScheduleForUser(String userId, Schedule schedule);
 
-    @Transactional(rollbackFor = IllegalStateException.class)
-    boolean setStartTimeAndDueTime(String scheduleId, Instant startTime, Instant dueTime);
+    Schedule addScheduleForUser(String userId, Schedule schedule);
 
     Schedule getScheduleById(String scheduleId);
 
-    boolean updateSchedule(Schedule schedule);
+    Schedule updateSchedule(Schedule schedule);
 
     boolean deleteSchedule(String scheduleId);
 
     List<Schedule> getAllSchedulesForUser(String userId);
 
-    boolean recycleSchedule(String scheduleId);
+    List<Schedule> getAllSchedulesCompletedForUserFrom(String userId, Instant from, Instant to, int limit);
 
-    boolean restoreSchedule(String scheduleId);
+    List<Schedule> getAllSchedulesUncompletedForUser(String userId);
 
-    boolean completeSchedule(String scheduleId);
+    Schedule recycleSchedule(String scheduleId);
 
-    boolean incompleteSchedule(String scheduleId);
+    Schedule restoreSchedule(String scheduleId);
+
+    Schedule completeSchedule(String scheduleId);
+
+    Schedule incompleteSchedule(String scheduleId);
 
     List<Schedule> getAllRecycledSchedulesForUser(String userId);
 
     boolean deleteAllRecycledSchedulesForUser(String userId);
 
     List<Schedule> getAllSchedulesByProjectId(String projectId);
-
-    List<Schedule> findSchedulesDuringTimePeriod(String userId, Instant beginTime, Instant endTime);
-
-    Repetition getRepetitionForSchedule(String scheduleId);
-
-    boolean cancelRepetition(String scheduleId);
-
-    boolean changeRepetition(Repetition repetition);
-
-    boolean setRepetitionForSchedule(String scheduleId, Repetition repetition);
 }

@@ -1,10 +1,13 @@
 package org.manlier.providers;
 
 import org.manlier.beans.User;
+import org.manlier.contracts.SysConst;
 import org.manlier.models.UserDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
  * 用户服务
@@ -29,14 +32,16 @@ public class UserService implements org.manlier.providers.interfaces.IUserServic
      * @return 添加结果
      */
     @Override
-    public boolean addUser(User user) {
-        return userDao.addUser(user) == 1;
+    public User addUser(User user) {
+        if (userDao.addUser(user) != 1)
+            return null;
+        return user;
     }
 
     /**
      * 通过账号和密码查找用户
      *
-     * @param email 邮箱账号
+     * @param email    邮箱账号
      * @param password 密码
      * @return 用户
      */
@@ -63,8 +68,10 @@ public class UserService implements org.manlier.providers.interfaces.IUserServic
      * @return 更新结果
      */
     @Override
-    public boolean updateUser(User user) {
-        return userDao.updateUser(user) == 1;
+    public User updateUser(User user) {
+        if (userDao.updateUser(user) != 1)
+            return null;
+        return user;
     }
 
     /**
@@ -87,5 +94,21 @@ public class UserService implements org.manlier.providers.interfaces.IUserServic
     @Override
     public boolean isUserExists(User user) {
         return userDao.findUserByAccountAndPassword(user.getEmail(), user.getPassword()) != null;
+    }
+
+    @Override
+    public User getUserById(String userId) {
+        return userDao.getUserByUserId(userId);
+    }
+
+    /**
+     * 获取当前已登录的用户
+     *
+     * @return 用户
+     */
+    @Override
+    public User getCurrentUser() {
+        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+        return (User) requestAttributes.getRequest().getSession().getAttribute(SysConst.LOGIN_SESSION_KEY);
     }
 }

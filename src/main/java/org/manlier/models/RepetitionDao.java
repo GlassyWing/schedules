@@ -39,5 +39,5 @@ public interface RepetitionDao {
      * @param repetition 重复规则
      * @return 更新数量
      */
-    int updateRepetition(@Param("repetition") Repetition repetition);
+    int updateRepetitionForSchedule(@Param("scheduleId") String scheduleId, @Param("repetition") Repetition repetition);
 }

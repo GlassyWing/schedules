@@ -5,8 +5,22 @@
 <!--suppress SqlDialectInspection -->
 <mapper namespace="org.manlier.models.UserDao">
 
-    <resultMap id="userMap" type="org.manlier.beans.User">
-
+    <resultMap id="userProfile" type="User">
+        <id property="userUuid" column="user_uuid"/>
+        <result property="email" column="email"/>
+        <result property="nickname" column="nickname"/>
+        <result property="password" column="password"/>
+        <result property="img" column="img"/>
+        <result property="createTime" column="create_time"/>
+        <association property="preferences" javaType="Preferences">
+            <id property="preferencesUuid" column="preferences_uuid"/>
+            <result property="startDayOfWeek" column="start_day_of_week"/>
+            <result property="defaultRemindBefore" column="default_remind_before"/>
+            <result property="dailyRemindTime" column="daily_remind_time"/>
+            <result property="defaultPriority" column="default_priority"/>
+            <result property="timeZone" column="time_zone"/>
+            <result property="dailyRemindToggle" column="daily_remind_toggle"/>
+        </association>
     </resultMap>
 
     <!--添加用户-->
@@ -22,17 +36,17 @@
     </insert>
 
     <!--通过用户id获得用户-->
-    <select id="getUserByUserId" resultType="org.manlier.beans.User" resultMap="userMap">
+    <select id="getUserByUserId" resultMap="userProfile">
         SELECT * FROM
-        user
+        user_profile_view
         WHERE
         user_uuid = #{userId}
     </select>
 
     <!--获得指定数量的用户-->
-    <select id="selectUsersFrom" resultType="User">
+    <select id="selectUsersFrom" resultMap="userProfile">
         SELECT * FROM
-        user
+        user_profile_view
         ORDER BY
         create_time
         limit #{offset}, #{size}
@@ -65,14 +79,14 @@
     </delete>
 
     <!--通过账号查找用户-->
-    <select id="findUserByAccount" resultType="User">
-        SELECT * FROM user
+    <select id="findUserByAccount" resultMap="userProfile">
+        SELECT * FROM user_profile_view
         WHERE email = #{email}
     </select>
 
     <!--通过账号和密码查找用户-->
-    <select id="findUserByAccountAndPassword" resultType="User">
-        SELECT * FROM user
+    <select id="findUserByAccountAndPassword" resultMap="userProfile">
+        SELECT * FROM user_profile_view
         WHERE email = #{email} AND password = #{password}
     </select>
 

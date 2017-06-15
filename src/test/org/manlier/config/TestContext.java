@@ -1,10 +1,7 @@
 package org.manlier.config;
 
-import org.junit.Before;
-import org.manlier.models.ScheduleDao;
-import org.manlier.providers.ScheduleService;
-import org.manlier.providers.interfaces.IScheduleService;
-import org.manlier.providers.interfaces.IUserService;
+import org.manlier.providers.*;
+import org.manlier.providers.interfaces.*;
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,12 +17,28 @@ import org.springframework.context.annotation.ImportResource;
 public class TestContext {
 
     @Bean
+    public INotificationService notificationService() {
+        return Mockito.mock(INotificationService.class);
+    }
+
+    @Bean
+    public IPreferencesService settingsService() {
+        return Mockito.mock(PreferencesService.class);
+    }
+
+    @Bean
     public IUserService userService() {
-        return Mockito.mock(IUserService.class);
+        return Mockito.mock(UserService.class);
     }
 
     @Bean
     public IScheduleService scheduleService() {
-        return Mockito.mock(ScheduleService.class);
+        return Mockito.mock(IScheduleService.class);
+    }
+
+    @Bean
+    public IProjectService projectService() {
+        return Mockito.mock(IProjectService.class);
     }
 }
+

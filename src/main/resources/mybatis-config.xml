@@ -16,10 +16,15 @@
     </settings>
 
     <typeHandlers>
-        <typeHandler handler="org.apache.ibatis.type.EnumOrdinalTypeHandler" javaType="org.manlier.contracts.ScheduleStatus"/>
-        <typeHandler handler="org.manlier.models.typehandlers.CronExpressionTypeHandler" javaType="org.quartz.CronExpression"/>
-        <typeHandler handler="org.manlier.models.typehandlers.DurationTypeHandler" javaType="java.time.Duration" jdbcType="VARCHAR"/>
+        <typeHandler handler="org.apache.ibatis.type.EnumOrdinalTypeHandler"
+                     javaType="org.manlier.contracts.ScheduleStatus"/>
+        <typeHandler handler="org.manlier.models.typehandlers.CronExpressionTypeHandler"
+                     javaType="org.quartz.CronExpression" jdbcType="VARCHAR"/>
+        <typeHandler handler="org.manlier.models.typehandlers.DurationTypeHandler" javaType="java.time.Duration"
+                     jdbcType="VARCHAR"/>
+        <typeHandler handler="org.manlier.models.typehandlers.ZoneIdTypeHandler" javaType="java.time.ZoneId"
+                     jdbcType="VARCHAR"/>
     </typeHandlers>
 
-    
+
 </configuration>

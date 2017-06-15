@@ -31,6 +31,7 @@
         <property name="cookieMaxAge" value="100000"/>
     </bean>
 
+    <!--支持JSR310的ObjectMapper-->
     <bean id="jacksonObjectMapper" class="org.manlier.customs.json.JSR310SupportObjectMapperFactoryBean"/>
 
 </beans>

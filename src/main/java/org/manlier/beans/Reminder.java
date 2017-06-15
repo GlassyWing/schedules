@@ -18,6 +18,7 @@ public class Reminder {
 
     private String scheduleUuid;
 
+    // 在多久前提醒
     private Duration duration;
 
     public Reminder() {
@@ -25,6 +26,10 @@ public class Reminder {
 
     public Reminder(String duration) {
         this.duration = Duration.parse(duration);
+    }
+
+    public Reminder(Duration duration) {
+        this.duration = duration;
     }
 
     public String getReminderUuid() {

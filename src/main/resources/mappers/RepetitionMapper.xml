@@ -30,7 +30,7 @@
     </select>
 
     <!--更新日程的重复规则-->
-    <update id="updateRepetition">
+    <update id="updateRepetitionForSchedule">
         UPDATE repetition
         <set>
             <if test="repetition.repeatOn != null">
@@ -43,6 +43,7 @@
                 , cron = #{repetition.cron, typeHandler=org.manlier.models.typehandlers.CronExpressionTypeHandler}
             </if>
         </set>
+        WHERE schedule_uuid = #{scheduleId}
     </update>
 
     <!--删除指定日程的重复规则-->

@@ -20,18 +20,18 @@ public class UserModelTest extends DBConnectTest {
     @Autowired
     private UserDao userDao;
 
+    private String defaultUserId = "97177576174256135";
+
     @Test
     public void testAddUser() {
-        User user = new User("1490224913@qq.com", "afeeafzvvn");
+        User user = new User("miaomiao@qq.com", "afeeafzvvn");
         userDao.addUser(user);
         logger.info("generated uuid: " + user.getUserUuid());
     }
 
     @Test
     public void testGetUser() {
-        User user = new User("1490224913@qq.com", "afeeafzvvn");
-        userDao.addUser(user);
-        user = userDao.getUserByUserId(user.getUserUuid());
+        User user = userDao.getUserByUserId(defaultUserId);
         System.out.println(user);
     }
 
