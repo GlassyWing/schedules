@@ -25,8 +25,8 @@
             <if test="preferences.defaultPriority != null">
                 , default_priority = #{preferences.defaultPriority}
             </if>
-            <if test="preferences.lastSettingTimeZone != null">
-                , last_setting_time_zone = #{preferences.lastSettingTimeZone, typeHandler=org.manlier.models.typehandlers.ZoneIdTypeHandler}
+            <if test="preferences.timeZone != null">
+                , time_zone = #{preferences.timeZone, typeHandler=org.manlier.models.typehandlers.ZoneIdTypeHandler}
             </if>
             <if test="preferences.dailyRemindToggle != null">
                 , daily_remind_toggle = #{preferences.dailyRemindToggle}

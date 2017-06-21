@@ -114,9 +114,11 @@
         <if test="to != null">
             AND complete_time &lt; #{to}
         </if>
+        ORDER BY complete_time DESC
         <if test="limit != null">
             limit #{limit}
         </if>
+
     </select>
 
     <!--获取所有未完成的日程-->
@@ -175,6 +177,7 @@
         SELECT * FROM schedule_detail_view
         WHERE user_uuid = #{userId}
         AND deleted = 1
+        ORDER BY modify_time DESC
     </select>
 
 </mapper>
