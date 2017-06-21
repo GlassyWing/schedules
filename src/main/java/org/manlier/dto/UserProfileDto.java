@@ -22,6 +22,9 @@ public class UserProfileDto {
     @JsonView(Views.Internal.class)
     private String password;
 
+    @JsonView(Views.Internal.class)
+    private String newPassword;
+
     @JsonView(Views.Public.class)
     private String img;
 
@@ -85,6 +88,14 @@ public class UserProfileDto {
 
     public void setPreferences(PreferencesDto preferences) {
         this.preferences = preferences;
+    }
+
+    public String getNewPassword() {
+        return newPassword;
+    }
+
+    public void setNewPassword(String newPassword) {
+        this.newPassword = newPassword;
     }
 
     @Override
