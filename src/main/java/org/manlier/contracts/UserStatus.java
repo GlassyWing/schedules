@@ -6,11 +6,9 @@ package org.manlier.contracts;
  */
 public enum UserStatus {
 
-    ACCOUNT_NOT_EXIST("账户不存在"),
-    PASSWORD_ERROR("密码错误"),
-    LOGIN_SUCCESS("登录成功"),
-    EMAIL_HAS_EXIST("邮箱已存在"),
-    PASSWORD_DOES_NOT_MATCH("密码不匹配");
+    ACCOUNT_NOT_EXIST("email:账户不存在"),
+    PASSWORD_ERROR("password:密码错误"),
+    EMAIL_HAS_EXIST("email:邮箱已存在");
 
     private String msg;
 
