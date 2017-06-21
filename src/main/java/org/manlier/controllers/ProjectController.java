@@ -6,6 +6,7 @@ import org.manlier.dto.ProjectDto;
 import org.manlier.dto.TaskDto;
 import org.manlier.dto.base.BaseResult;
 import org.manlier.providers.interfaces.IProjectService;
+import org.manlier.providers.interfaces.IUserService;
 import org.manlier.utils.EntityToDtoHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,7 @@ import static org.manlier.utils.EntityToDtoHelper.*;
  * Created by manlier on 2017/6/12.
  */
 @Controller
+@CrossOrigin(origins = {"http://localhost:3000"})
 @RequestMapping("/api/project")
 public class ProjectController  {
 
@@ -34,6 +36,9 @@ public class ProjectController  {
 
     @Resource
     private IProjectService projectService;
+
+    @Resource
+    private IUserService userService;
 
     /**
      * 删除计划
@@ -86,16 +91,15 @@ public class ProjectController  {
     /**
      * 添加计划
      *
-     * @param userId  用户id
      * @param projectDto 计划
      * @return 添加结果
      */
     @RequestMapping(method = RequestMethod.POST)
     @ResponseBody
-    public BaseResult<ProjectDto> add(@SessionAttribute("userId") String userId
-            , @RequestBody ProjectDto projectDto) {
+    public BaseResult<ProjectDto> add( @RequestBody ProjectDto projectDto) {
         logger.info("Try to create a new project: '{}'", projectDto.getTitle());
         Project project = convertToEntity(projectDto);
+        String userId = userService.getCurrentUser().getUserUuid();
         if ((project = projectService.addProjectForUser(userId, project)) != null) {
             logger.info("Create the project '{}' success.", project.getTitle());
             return success(convertToDto(project));

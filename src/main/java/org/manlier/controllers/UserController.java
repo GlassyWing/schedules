@@ -33,6 +33,7 @@ import static org.manlier.utils.EntityToDtoHelper.*;
  * Created by manlier on 2017/6/8.
  */
 @Controller
+@CrossOrigin(origins = {"http://localhost:3000"})
 @RequestMapping("/api/user")
 public class UserController {
 
@@ -56,7 +57,7 @@ public class UserController {
     @ResponseBody
     public BaseResult<UserProfileDto> login(@RequestBody() UserProfileDto userProfileDto, HttpSession session, ZoneId zoneId) {
         User user = convertToEntity(userProfileDto);
-        logger.info("User {} try to login at {}.", user, zoneId);
+        logger.info("User {} try to login at {}.", session.getId(), zoneId);
         if (!userService.isAccountExists(user.getEmail())) {
             logger.info("User email {} not exist", user.getEmail());
             return new BaseResult<>(FAIL, ACCOUNT_NOT_EXIST.getMsg(), null);
@@ -83,6 +84,12 @@ public class UserController {
     @Transactional
     public BaseResult<UserProfileDto> signUp(@RequestBody() UserProfileDto userProfileDto, ZoneId zoneId) {
         User user = convertToEntity(userProfileDto);
+
+        // 检查账号是否已经存在
+        if (userService.isAccountExists(user.getEmail())) {
+            logger.info("Account has exist!");
+            return new BaseResult<>(FAIL, EMAIL_HAS_EXIST.getMsg(), null);
+        }
         user = userService.addUser(user);
         if (user != null) {
 
@@ -120,6 +127,28 @@ public class UserController {
     }
 
     /**
+     * 修改用户昵称
+     *
+     * @param userProfileDto 用户概要
+     * @return 用户概要（修改后）
+     */
+    @RequestMapping(value = "/nickname", method = RequestMethod.POST)
+    @ResponseBody
+    public BaseResult<UserProfileDto> changeNickname(@RequestBody() UserProfileDto userProfileDto) {
+        User newUser = convertToEntity(userProfileDto);
+        logger.info("Try to update user {}", newUser);
+
+        newUser = userService.updateUser(newUser);
+
+        if (newUser != null) {
+            logger.info("Update user {} success", newUser);
+            return success(convertToDto(newUser));
+        }
+        logger.info("Update user {} fail", newUser);
+        return fail(convertToDto(newUser));
+    }
+
+    /**
      * 更改密码
      *
      * @param userProfileDto 用户
@@ -127,13 +156,28 @@ public class UserController {
      */
     @RequestMapping(value = "/changePassword", method = RequestMethod.POST)
     @ResponseBody
-    public BaseResult<UserProfileDto> changePassword(@RequestBody() UserProfileDto userProfileDto) {
-        User user = convertToEntity(userProfileDto);
-        logger.info("Try to change the password for user {}.", user.getEmail());
-        user = userService.updateUser(user);
-        if (user != null) {
-            logger.info("Change password for user {} success.", user.getEmail());
-            return success(convertToDto(user));
+    public BaseResult<UserProfileDto> changePassword(@RequestBody() UserProfileDto userProfileDto, HttpSession session) {
+        User newUser = convertToEntity(userProfileDto);
+        User oldUser = userService.getCurrentUser();
+
+        logger.info("New user password {}, newPassword {}", newUser.getPassword(), userProfileDto.getNewPassword());
+
+        logger.info("Old user password {}", oldUser.getPassword());
+
+        // 验证原始密码是否正确
+        if (!newUser.getPassword().equals(oldUser.getPassword())) {
+            return new BaseResult<>(FAIL, PASSWORD_ERROR.getMsg(), null);
+        }
+
+        newUser.setPassword(userProfileDto.getNewPassword());
+
+        logger.info("Try to change the password for user {}.", newUser.getEmail());
+        newUser = userService.updateUser(newUser);
+        if (newUser != null) {
+            logger.info("Change password for user {} success.", newUser.getEmail());
+            // 更改后，需更新状态
+            session.setAttribute(SysConst.LOGIN_SESSION_KEY, newUser);
+            return success(convertToDto(newUser));
         }
         logger.info("Try to change password for user fail.");
         return fail();
@@ -148,12 +192,20 @@ public class UserController {
     @RequestMapping(value = "/email", method = RequestMethod.POST)
     @ResponseBody
     public BaseResult<UserProfileDto> email(@RequestBody() UserProfileDto userProfileDto) {
-        User user = convertToEntity(userProfileDto);
-        logger.info("Try to change the email for user {}.", user.getEmail());
-        user = userService.updateUser(user);
-        if (user != null) {
-            logger.info("Change password for user {} success.", user.getEmail());
-            return success(convertToDto(user));
+        logger.info("user profile: {}", userProfileDto);
+        User newUser = convertToEntity(userProfileDto);
+        User oldUser = userService.getCurrentUser();
+
+        // 验证密码是否正确
+        if (!newUser.getPassword().equals(oldUser.getPassword())) {
+            return new BaseResult<>(FAIL, PASSWORD_ERROR.getMsg(), null);
+        }
+
+        logger.info("Try to change the email for user {}.", newUser.getEmail());
+        newUser = userService.updateUser(newUser);
+        if (newUser != null) {
+            logger.info("Change email for user {} success.", newUser.getEmail());
+            return success(convertToDto(newUser));
         }
         logger.info("Try to change password for user fail.");
         return fail();
@@ -168,8 +220,9 @@ public class UserController {
     @RequestMapping(value = "/preferences/settings", method = RequestMethod.PUT)
     @ResponseBody
     public BaseResult<PreferencesDto> setPreferences(@RequestBody PreferencesDto preferencesDto) {
+        String userId = userService.getCurrentUser().getUserUuid();
         Preferences preferences = convertToEntity(preferencesDto);
-        preferences = preferencesService.updatePreferencesForUser(preferencesDto.getUserUuid(), preferences);
+        preferences = preferencesService.updatePreferencesForUser(userId, preferences);
         if (preferences != null) {
             return success(convertToDto(preferences));
         }

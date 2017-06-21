@@ -1,5 +1,6 @@
 package org.manlier.controllers;
 
+import org.apache.logging.log4j.core.config.plugins.validation.constraints.Required;
 import org.manlier.beans.Preferences;
 import org.manlier.beans.Reminder;
 import org.manlier.beans.Schedule;
@@ -33,6 +34,7 @@ import static java.lang.Math.*;
  * Created by manlier on 2017/6/8.
  */
 @Controller
+@CrossOrigin(origins = {"http://localhost:3000"})
 @RequestMapping("/api/task")
 public class TaskController implements
         OnRemindersChangeListener, OnScheduleStatusChangeListener {
@@ -61,6 +63,7 @@ public class TaskController implements
     @ResponseBody
     public BaseResult<TaskDto> addTask(@RequestBody TaskDto taskDto) {
         Schedule schedule = convertToEntity(taskDto);
+        logger.info("Try to add task {}.", schedule);
         schedule = scheduleService.addScheduleForUser(userService.getCurrentUser().getUserUuid(), schedule);
         if (schedule != null)
             return success(convertToDto(schedule));
@@ -99,6 +102,24 @@ public class TaskController implements
     }
 
     /**
+     * 获取所有以回收的日程
+     *
+     * @return 已回收的日程
+     */
+    @RequestMapping(value = "/recycled", method = RequestMethod.GET)
+    @ResponseBody
+    public BaseResult<List<TaskDto>> getAllRecycledTasks() {
+        String userId = userService.getCurrentUser().getUserUuid();
+        logger.info("Try to get all recycled tasks");
+        List<TaskDto> tasks = scheduleService.getAllRecycledSchedulesForUser(userId)
+                .stream()
+                .map(EntityToDtoHelper::convertToDto)
+                .collect(Collectors.toList());
+        logger.info("Get recycled tasks, size: {}", tasks.size());
+        return success(tasks);
+    }
+
+    /**
      * 恢复日程
      *
      * @param taskId 任务id
@@ -122,6 +143,7 @@ public class TaskController implements
     @RequestMapping(value = "/{taskId}/complete", method = RequestMethod.PUT)
     @ResponseBody
     public BaseResult<TaskDto> completeTask(@PathVariable("taskId") String taskId) {
+        logger.info("Complete task {}, ", taskId);
         Schedule schedule = scheduleService.completeSchedule(taskId);
         if (schedule != null)
             return success(convertToDto(schedule));
@@ -153,6 +175,7 @@ public class TaskController implements
     @ResponseBody
     public BaseResult<Void> deleteTask(@PathVariable("taskId") String taskId) {
         boolean deleted = scheduleService.deleteSchedule(taskId);
+        logger.info("Try to delete task {}, is success: {}", taskId, deleted);
         if (deleted) return success();
         return fail();
     }
@@ -182,13 +205,19 @@ public class TaskController implements
      */
     @RequestMapping(value = "/completed", method = RequestMethod.GET)
     @ResponseBody
-    public BaseResult<List<TaskDto>> getCompletedTask(@RequestParam("from") Instant from
-            , @RequestParam("to") Instant to
+    public BaseResult<List<TaskDto>> getCompletedTask(@RequestParam(value = "from", required = false) String from
+            , @RequestParam("to") String to
             , @RequestParam("limit") int limit) {
         limit = min(limit, SysConst.MAX_LIMIT);
-        System.out.println("" + from + to + limit);
         String userId = userService.getCurrentUser().getUserUuid();
-        List<TaskDto> tasks = scheduleService.getAllSchedulesCompletedForUserFrom(userId, from, to, limit)
+        Instant beginTime;
+        if (from != null) {
+            beginTime = Instant.parse(from);
+        } else {
+            beginTime = null;
+        }
+        Instant endTime = Instant.parse(to);
+        List<TaskDto> tasks = scheduleService.getAllSchedulesCompletedForUserFrom(userId, beginTime, endTime, limit)
                 .stream().map(EntityToDtoHelper::convertToDto).collect(Collectors.toList());
         return success(tasks);
     }

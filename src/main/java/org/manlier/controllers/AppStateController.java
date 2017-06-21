@@ -1,20 +1,29 @@
 package org.manlier.controllers;
 
+import org.manlier.beans.User;
+import org.manlier.contracts.SysConst;
 import org.manlier.dto.AppState;
+import org.manlier.dto.base.BaseResult;
 import org.manlier.providers.interfaces.IAppStateService;
 import org.manlier.providers.interfaces.IUserService;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import static org.manlier.dto.base.BaseResult.*;
 
 /**
  * 应用程序状态控制器
  * Created by manlier on 2017/6/15.
  */
+@Controller
 @RequestMapping("/api/batch")
+@CrossOrigin(origins = {"http://localhost:3000"})
 public class AppStateController {
+
+    private Logger logger = LoggerFactory.getLogger(AppStateController.class);
 
     @Resource
     private IAppStateService appStateService;
@@ -29,8 +38,14 @@ public class AppStateController {
      * @return 应用程序状态
      */
     @RequestMapping(value = "/check/{checkPoint}", method = RequestMethod.GET)
-    public AppState getCurrentAppState(@PathVariable("checkPoint") long checkPoint) {
-        String userId = userService.getCurrentUser().getUserUuid();
-        return appStateService.getAppStateFourUser(userId);
+    @ResponseBody
+    public BaseResult<AppState> getCurrentAppState(@PathVariable("checkPoint") long checkPoint) {
+        User user = userService.getCurrentUser();
+        String userId = user.getUserUuid();
+        AppState appState = appStateService.getAppStateFourUser(userId);
+        if (appState == null) {
+            fail();
+        }
+        return success(appState);
     }
 }
