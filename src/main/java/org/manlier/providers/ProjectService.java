@@ -49,6 +49,12 @@ public class ProjectService implements org.manlier.providers.interfaces.IProject
         return projectDao.getAllProjectsForUser(userId);
     }
 
+    @Override
+    @Transactional
+    public List<Project> getAllProjectsForUserExcept(String userId, String exceptProjectId) {
+        return projectDao.getAllProjectsForUserExcept(userId, exceptProjectId);
+    }
+
     /**
      * 通过计划id获取计划
      *

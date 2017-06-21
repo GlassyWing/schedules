@@ -351,7 +351,7 @@ public class ScheduleService implements IScheduleService {
      */
     @Override
     public List<Schedule> getAllRecycledSchedulesForUser(String userId) {
-        return scheduleDao.getAllSchedulesForUser(userId);
+        return scheduleDao.getAllRecycledSchedulesForUser(userId);
     }
 
     /**

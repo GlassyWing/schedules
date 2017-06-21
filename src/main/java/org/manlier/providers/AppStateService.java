@@ -44,10 +44,10 @@ public class AppStateService implements IAppStateService {
     @Transactional
     public AppState getAppStateFourUser(String userId) {
         AppState appState = new AppState(projectService.getInboxPrefix() + userId);
-        List<ProjectDto> projects = projectService.getAllProjectForUser(userId)
+        List<ProjectDto> projects = projectService.getAllProjectsForUserExcept(userId, projectService.getInboxPrefix() + userId)
                 .stream().map(EntityToDtoHelper::convertToDto).collect(Collectors.toList());
         appState.setProjects(projects);
-        List<TaskDto> tasks = scheduleService.getAllSchedulesUncompletedForUser(userId)
+        List<TaskDto> tasks = scheduleService.getAllSchedulesForUser(userId)
                 .stream().map(EntityToDtoHelper::convertToDto).collect(Collectors.toList());
         appState.setTasks(tasks);
         UserProfileDto user = convertToDto(userService.getUserById(userId));
