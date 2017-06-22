@@ -1,7 +1,6 @@
 package org.manlier.dto.base;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.sun.istack.internal.Nullable;
 import org.manlier.customs.json.ResultSerializer;
 
 /**
@@ -20,12 +19,12 @@ public class BaseResult<T> implements IResult<T> {
     public BaseResult() {
     }
 
-    public BaseResult(Result result, @Nullable T burden) {
+    public BaseResult(Result result,  T burden) {
         this.result = result;
         this.burden = burden;
     }
 
-    public BaseResult(Result result, String message, @Nullable T burden) {
+    public BaseResult(Result result, String message,  T burden) {
         this.result = result;
         this.message = message;
         this.burden = burden;

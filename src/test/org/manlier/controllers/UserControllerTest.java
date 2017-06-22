@@ -56,6 +56,9 @@ public class UserControllerTest extends BaseControllerTest {
     public void login() throws Exception {
         User user = new User("140f@mail.com", "4020");
 
+        //language=JSON
+        String userStr = "{\"username\":\"14fea\",\"password\":\"feaf4901\"}";
+
         when(userService.isUserExists(any()))
                 .thenReturn(true);
         when(userService.isAccountExists(Matchers.any(String.class)))
@@ -66,7 +69,7 @@ public class UserControllerTest extends BaseControllerTest {
         MvcResult mvcResult = mockMvc.perform(
                 post("/api/user/login")
                         .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                        .content(TestUtil.convertObjectToJsonBytes(user)))
+                        .content(userStr.getBytes()))
                 .andExpect(status().is(200))
                 .andExpect(jsonPath("$.result", is(true)))
                 .andReturn();

@@ -16,6 +16,9 @@ public interface IProjectService {
     List<Project> getAllProjectForUser(String userId);
 
     @Transactional
+    List<Project> getAllProjectsForUserExcept(String userId, String exceptProjectId);
+
+    @Transactional
     Project getProjectById(String projectId);
 
     @Transactional

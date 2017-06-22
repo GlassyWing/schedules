@@ -1,6 +1,5 @@
 package org.manlier.models;
 
-import com.sun.istack.internal.Nullable;
 import org.apache.ibatis.annotations.Param;
 import org.manlier.beans.Schedule;
 
@@ -108,7 +107,7 @@ public interface ScheduleDao {
      * @return 日程
      */
     List<Schedule> getAllSchedulesCompletedForUserFrom(@Param("userId") String userId
-            , @Param("from") @Nullable Instant from
+            , @Param("from") Instant from
             , @Param("to") Instant to
             , @Param("limit") Integer limit);
 

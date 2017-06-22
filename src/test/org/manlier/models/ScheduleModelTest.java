@@ -90,7 +90,7 @@ public class ScheduleModelTest extends UserModelTest {
         Instant fromInstant, toInstant;
         toInstant = Instant.now();
 
-        List<Schedule> completed = scheduleDao.getAllSchedulesCompletedForUserFrom(userId, null, toInstant, 0);
+        List<Schedule> completed = scheduleDao.getAllSchedulesCompletedForUserFrom(userId, null, toInstant, 4);
         System.out.println(completed);
     }
 
@@ -126,7 +126,7 @@ public class ScheduleModelTest extends UserModelTest {
 
     @Test
     public void getAllRecycledSchedules() {
-        List<Schedule> schedules = scheduleDao.getAllRecycledSchedulesForUser("97147179147198486");
+        List<Schedule> schedules = scheduleDao.getAllRecycledSchedulesForUser("97186560591527948");
         System.out.println(schedules);
     }
 

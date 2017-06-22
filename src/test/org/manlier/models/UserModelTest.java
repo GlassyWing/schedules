@@ -20,7 +20,7 @@ public class UserModelTest extends DBConnectTest {
     @Autowired
     private UserDao userDao;
 
-    private String defaultUserId = "97177576174256135";
+    private String defaultUserId = "97186560591527948";
 
     @Test
     public void testAddUser() {
@@ -59,21 +59,10 @@ public class UserModelTest extends DBConnectTest {
 
     @Test
     public void findUser() {
-        String email = "fjeiao;@femca;.ca";
-        String password = "feacceafea";
+        String email = "miaomiao@qq.com";
         User user = userDao.findUserByAccount(email);
-        Assert.assertNull(user);
-
-        email = "134105810@qq.com";
-        user = userDao.findUserByAccount(email);
         Assert.assertNotNull(user);
 
-        user = userDao.findUserByAccountAndPassword(email, password);
-        Assert.assertNull(user);
-
-        password = "14ff3afe";
-        user = userDao.findUserByAccountAndPassword(email, password);
-        Assert.assertNotNull(user);
     }
 
 }
